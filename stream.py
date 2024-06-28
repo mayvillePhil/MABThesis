@@ -15,23 +15,76 @@ from plotly import graph_objects as go
 import pandas as pd
 import numpy as np
 
-def main():
-    st.title("Non Yahoo Finance Data Uploader")
 
+def option1():
+    st.write("Yahoo Finance Futures")
+    # Add your option 1 code here
+    yahoo_finance()
+
+
+def option2():
+    st.write("Your Own Dataset")
+    # Add your option 2 code here
+    my_dataset()
+
+def my_dataset():
     # Create a file uploader widget
+    @st.cache_data
+    def load_data(file):
+        df = pd.read_csv(file)
+        return df
+
+    st.title("File Uploader Example")
+    st.write('Upload your own dataset in a CSV file')
+    st.write(' format. The dataset should have two columns: Date and Price (spelled exact).')
     uploaded_file = st.file_uploader("Choose a file", type="csv")
 
-    # Check if a file has been uploaded
     if uploaded_file is not None:
-        # Display file details
+        df = load_data(uploaded_file)
+            # Display file details
         st.write("File name:", uploaded_file.name)
         st.write("File type:", uploaded_file.type)
         st.write("File size:", uploaded_file.size, "bytes")
-        df = pd.read_csv(uploaded_file)
         st.write(df)
+    
+        n_years = st.slider('Years of prediction', 1, 4)
+        period = n_years * 365
+        data_load_state = st.text('Loading data...')
+        data = df
+        data_load_state.text('Loading data...done!')
+
+        st.subheader('Raw data')
+        st.write(data.tail())
+        def plot_raw_data():
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=data['Date'], y=data['Price'], name='Your_Data_Price'))
+            fig.layout.update(title_text=f'Your Price Series Data', xaxis_rangeslider_visible=True)
+            st.plotly_chart(fig)
+
+        plot_raw_data()
+
+        # Forcasting using Prophet
+        df_train = data[['Date','Price']]
+        df_train = df_train.rename(columns={'Date': 'ds', 'Price': 'y'})
+
+        m = Prophet()
+        m.fit(df_train)
+        future = m.make_future_dataframe(periods=period)
+        forecast = m.predict(future)
+
+        st.write('Forecasted data')
+        fig1 = plot_plotly(m, forecast)
+        st.plotly_chart(fig1)
+
+        st.write('Forcast components')
+        fig2 = m.plot_components(forecast)
+        st.write(fig2)
+
+        st.subheader('Forecast data')
+        st.write(forecast.tail())
     else:
         st.write("Unsupported file type, please upload a CSV file.")
-
+def yahoo_finance():
     START = '1980-01-01'
     TODAY = date.today().strftime('%Y-%m-%d')
 
@@ -57,10 +110,6 @@ def main():
 
     st.subheader('Raw data')
     st.write(data.tail())
-
-
-
-
     def plot_raw_data():
         fig = go.Figure()
         fig.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='stock_open'))
@@ -90,5 +139,27 @@ def main():
     st.subheader('Forecast data')
     st.write(forecast.tail())
 
+def main():
+    st.title("Welcome to Phil's easy to use price analysis tool")
+    st.write('This tool will help you to predict the future price of your favorite stock or commodity')
+    st.write('You can choose to use Yahoo Finance Futures or upload your own dataset!')
+    st.write('by Phil Steichen')
+
+    # Initialize session state
+    if 'option' not in st.session_state:
+        st.session_state.option = None
+
+    # Create buttons and update session state
+    if st.button('Yahoo Finance Futures'):
+        st.session_state.option = 'option1'
+
+    if st.button('Your Own Dataset'):
+        st.session_state.option = 'option2'
+
+    # Run the function based on session state
+    if st.session_state.option == 'option1':
+        option1()
+    elif st.session_state.option == 'option2':
+        option2()
 if __name__ == '__main__':
     main()
