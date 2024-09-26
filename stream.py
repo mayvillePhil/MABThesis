@@ -138,8 +138,8 @@ def yahoo_finance():
 
     st.subheader('Forecast data')
     st.write(forecast.tail())
-
-def main():
+def page1():
+    st.title("Price Predictor")
     st.title("Welcome to Phil's easy to use price analysis tool")
     st.write('This tool will help you to predict the future price of your favorite stock or commodity')
     st.write('You can choose to use Yahoo Finance Futures or upload your own dataset!')
@@ -161,5 +161,24 @@ def main():
         option1()
     elif st.session_state.option == 'option2':
         option2()
+
+def hedgeAI():
+    st.write("Comparing hedge estimates for different locations")
+def page2():
+    st.title("HedgeAI")
+    st.write("This is the page for the thesis for the completion of MAB for Phil Steichen!")
+    hedgeAI()
+
+    
+def main():
+    # Create a sidebar for navigation
+    st.sidebar.title("Navigation")
+    page = st.sidebar.radio("Go to", ("HedgeAI","Price Predictor"))
+
+    # Show the selected page
+    if page == "Price Predictor":
+        page1()
+    elif page == "HedgeAI":
+        page2()
 if __name__ == '__main__':
     main()
